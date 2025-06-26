@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windkomponenten Visualisierung</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+        
+        .visualization-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .controls-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .control-group input, .control-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .control-group input:focus, .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .results {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .results h3 {
+            margin: 0 0 15px 0;
+            font-size: 1.4em;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .result-value {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        #windVector {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: white;
+        }
+        
+        .formula-box {
+            background: #e8f4fd;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .formula-box h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        
+        .formula {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Windkomponenten Visualisierung</h1>
+            <p>Berechnung und Darstellung von u- und v-Komponenten des Windes</p>
+        </div>
+        
+        <div class="content">
+            <div class="visualization-panel">
+                <h3>Vektor-Darstellung</h3>
+                <svg id="windVector" width="100%" height="400" viewBox="0 0 400 400">
+                    <defs>
+                        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f0f0f0" stroke-width="1"/>
+                        </pattern>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+                                refX="9" refY="3.5" orient="auto" fill="#f1948a">
+                            <polygon points="0 0, 10 3.5, 0 7" />
+                        </marker>
+                        <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" 
+                                refX="9" refY="3.5" orient="auto" fill="#85c1e9">
+                            <polygon points="0 0, 10 3.5, 0 7" />
+                        </marker>
+                        <marker id="arrowhead-green" markerWidth="10" markerHeight="7" 
+                                refX="9" refY="3.5" orient="auto" fill="#7dcea0">
+                            <polygon points="0 0, 10 3.5, 0 7" />
+                        </marker>
+                        <filter id="drop-shadow">
+                            <feDropShadow dx="2" dy="2" stdDeviation="2" flood-opacity="0.1"/>
+                        </filter>
+                    </defs>
+                    
+                    <!-- Background -->
+                    <rect width="400" height="400" fill="url(#grid)"/>
+                    
+                    <!-- Coordinate system -->
+                    <line x1="200" y1="0" x2="200" y2="400" stroke="#bdc3c7" stroke-width="2"/>
+                    <line x1="0" y1="200" x2="400" y2="200" stroke="#bdc3c7" stroke-width="2"/>
+                    
+                    <!-- Axis labels -->
+                    <text x="380" y="195" fill="#2c3e50" font-size="14" font-weight="bold">+u (Ost)</text>
+                    <text x="10" y="195" fill="#2c3e50" font-size="14" font-weight="bold">-u (West)</text>
+                    <text x="205" y="15" fill="#2c3e50" font-size="14" font-weight="bold">+v (Nord)</text>
+                    <text x="205" y="395" fill="#2c3e50" font-size="14" font-weight="bold">-v (Süd)</text>
+                    
+                    <!-- Wind vectors will be drawn here -->
+                    <g id="vectors"></g>
+                    
+                    <!-- Legend -->
+                    <g id="legend" transform="translate(15, 310)">
+                        <!-- Gesamtwind -->
+                        <g transform="translate(0, 15)">
+                            <circle cx="8" cy="0" r="3" fill="#e74c3c"/>
+                            <line x1="15" y1="0" x2="35" y2="0" stroke="#e74c3c" stroke-width="3" marker-end="url(#arrowhead)"/>
+                            <text x="42" y="4" fill="#2c3e50" font-size="11" font-weight="500">Gesamtwind |V|</text>
+                        </g>
+                        
+                        <!-- u-Komponente -->
+                        <g transform="translate(0, 33)">
+                            <circle cx="8" cy="0" r="3" fill="#3498db"/>
+                            <line x1="15" y1="0" x2="35" y2="0" stroke="#3498db" stroke-width="3" marker-end="url(#arrowhead-blue)"/>
+                            <text x="42" y="4" fill="#2c3e50" font-size="11" font-weight="500">u-Komponente (Ost-West)</text>
+                        </g>
+                        
+                        <!-- v-Komponente -->
+                        <g transform="translate(0, 51)">
+                            <circle cx="8" cy="0" r="3" fill="#27ae60"/>
+                            <line x1="15" y1="0" x2="35" y2="0" stroke="#27ae60" stroke-width="3" marker-end="url(#arrowhead-green)"/>
+                            <text x="42" y="4" fill="#2c3e50" font-size="11" font-weight="500">v-Komponente (Nord-Süd)</text>
+                        </g>
+                    </g>
+                </svg>
+                
+                <div class="formula-box">
+                    <h4>Verwendete Formeln:</h4>
+                    <div class="formula">u = -|V| sin(φ)</div>
+                    <div class="formula">v = -|V| cos(φ)</div>
+                    <div class="formula">|V| = √(u² + v²)</div>
+                    <div class="formula">φ = 180° + (180°/π) × atan2(u, v)</div>
+                </div>
+            </div>
+            
+            <div class="controls-panel">
+                <h3>Eingabe-Parameter</h3>
+                
+                <div class="control-group">
+                    <label for="inputMode">Eingabe-Modus:</label>
+                    <select id="inputMode">
+                        <option value="direction">Windrichtung & Geschwindigkeit</option>
+                        <option value="components">u- & v-Komponenten</option>
+                    </select>
+                </div>
+                
+                <div id="directionInputs">
+                    <div class="control-group">
+                        <label for="windDirection">Windrichtung (°):</label>
+                        <input type="number" id="windDirection" value="225" min="0" max="360" step="1">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="windSpeed">Windgeschwindigkeit (m/s):</label>
+                        <input type="number" id="windSpeed" value="15" min="0" max="50" step="0.1">
+                    </div>
+                </div>
+                
+                <div id="componentInputs" style="display: none;">
+                    <div class="control-group">
+                        <label for="uComponent">u-Komponente (m/s):</label>
+                        <input type="number" id="uComponent" value="10.6" step="0.1">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="vComponent">v-Komponente (m/s):</label>
+                        <input type="number" id="vComponent" value="10.6" step="0.1">
+                    </div>
+                </div>
+                
+                <div class="results">
+                    <h3>Berechnete Werte</h3>
+                    <div class="result-item">
+                        <span>u-Komponente:</span>
+                        <span class="result-value" id="resultU">+10.6 m/s</span>
+                    </div>
+                    <div class="result-item">
+                        <span>v-Komponente:</span>
+                        <span class="result-value" id="resultV">+10.6 m/s</span>
+                    </div>
+                    <div class="result-item">
+                        <span>Windgeschwindigkeit:</span>
+                        <span class="result-value" id="resultSpeed">15.0 m/s</span>
+                    </div>
+                    <div class="result-item">
+                        <span>Windrichtung:</span>
+                        <span class="result-value" id="resultDirection">225.0°</span>
+                    </div>
+                    <div class="result-item">
+                        <span>Windtyp:</span>
+                        <span class="result-value" id="resultType">Südwestwind</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculateWindComponents(direction, speed) {
+            const radians = direction * Math.PI / 180;
+            const u = -speed * Math.sin(radians);
+            const v = -speed * Math.cos(radians);
+            return { u, v };
+        }
+
+        function calculateWindDirection(u, v) {
+            const speed = Math.sqrt(u * u + v * v);
+            let direction = 180 + (180 / Math.PI) * Math.atan2(u, v);
+            if (direction >= 360) direction -= 360;
+            return { speed, direction };
+        }
+
+        function getWindType(direction) {
+            const types = [
+                { min: 348.75, max: 360, name: "Nordwind" },
+                { min: 0, max: 11.25, name: "Nordwind" },
+                { min: 11.25, max: 33.75, name: "Nord-Nordostwind" },
+                { min: 33.75, max: 56.25, name: "Nordostwind" },
+                { min: 56.25, max: 78.75, name: "Ost-Nordostwind" },
+                { min: 78.75, max: 101.25, name: "Ostwind" },
+                { min: 101.25, max: 123.75, name: "Ost-Südostwind" },
+                { min: 123.75, max: 146.25, name: "Südostwind" },
+                { min: 146.25, max: 168.75, name: "Süd-Südostwind" },
+                { min: 168.75, max: 191.25, name: "Südwind" },
+                { min: 191.25, max: 213.75, name: "Süd-Südwestwind" },
+                { min: 213.75, max: 236.25, name: "Südwestwind" },
+                { min: 236.25, max: 258.75, name: "West-Südwestwind" },
+                { min: 258.75, max: 281.25, name: "Westwind" },
+                { min: 281.25, max: 303.75, name: "West-Nordwestwind" },
+                { min: 303.75, max: 326.25, name: "Nordwestwind" },
+                { min: 326.25, max: 348.75, name: "Nord-Nordwestwind" }
+            ];
+            
+            for (let type of types) {
+                if (direction >= type.min && direction < type.max) {
+                    return type.name;
+                }
+            }
+            return "Unbekannt";
+        }
+
+        function updateVisualization() {
+            const mode = document.getElementById('inputMode').value;
+            let u, v, speed, direction;
+
+            if (mode === 'direction') {
+                direction = parseFloat(document.getElementById('windDirection').value);
+                speed = parseFloat(document.getElementById('windSpeed').value);
+                const components = calculateWindComponents(direction, speed);
+                u = components.u;
+                v = components.v;
+            } else {
+                u = parseFloat(document.getElementById('uComponent').value);
+                v = parseFloat(document.getElementById('vComponent').value);
+                const wind = calculateWindDirection(u, v);
+                speed = wind.speed;
+                direction = wind.direction;
+            }
+
+            // Update results
+            document.getElementById('resultU').textContent = (u >= 0 ? '+' : '') + u.toFixed(1) + ' m/s';
+            document.getElementById('resultV').textContent = (v >= 0 ? '+' : '') + v.toFixed(1) + ' m/s';
+            document.getElementById('resultSpeed').textContent = speed.toFixed(1) + ' m/s';
+            document.getElementById('resultDirection').textContent = direction.toFixed(1) + '°';
+            document.getElementById('resultType').textContent = getWindType(direction);
+
+            // Update SVG
+            drawWindVectors(u, v, speed);
+        }
+
+        function drawWindVectors(u, v, speed) {
+            const svg = document.getElementById('vectors');
+            svg.innerHTML = '';
+
+            const centerX = 200;
+            const centerY = 200;
+            const scale = 8; // pixels per m/s
+
+            // Scale vectors for display
+            const uScaled = u * scale;
+            const vScaled = -v * scale; // Negative because SVG y-axis is flipped
+
+            // Draw u-component (horizontal) - LIGHTER arrow
+            if (Math.abs(u) > 0.1) {
+                const uLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                uLine.setAttribute('x1', centerX);
+                uLine.setAttribute('y1', centerY);
+                uLine.setAttribute('x2', centerX + uScaled);
+                uLine.setAttribute('y2', centerY);
+                uLine.setAttribute('stroke', '#85c1e9'); // Light blue for arrow
+                uLine.setAttribute('stroke-width', '3');
+                uLine.setAttribute('marker-end', 'url(#arrowhead-blue)');
+                svg.appendChild(uLine);
+            }
+
+            // Draw v-component (vertical) - LIGHTER arrow
+            if (Math.abs(v) > 0.1) {
+                const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                vLine.setAttribute('x1', centerX);
+                vLine.setAttribute('y1', centerY);
+                vLine.setAttribute('x2', centerX);
+                vLine.setAttribute('y2', centerY + vScaled);
+                vLine.setAttribute('stroke', '#7dcea0'); // Light green for arrow
+                vLine.setAttribute('stroke-width', '3');
+                vLine.setAttribute('marker-end', 'url(#arrowhead-green)');
+                svg.appendChild(vLine);
+            }
+
+            // Draw resultant vector - LIGHTER arrow
+            if (speed > 0.1) {
+                const resultLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                resultLine.setAttribute('x1', centerX);
+                resultLine.setAttribute('y1', centerY);
+                resultLine.setAttribute('x2', centerX + uScaled);
+                resultLine.setAttribute('y2', centerY + vScaled);
+                resultLine.setAttribute('stroke', '#f1948a'); // Light red for arrow
+                resultLine.setAttribute('stroke-width', '4');
+                resultLine.setAttribute('marker-end', 'url(#arrowhead)');
+                svg.appendChild(resultLine);
+
+                // Dashed lines for component projection
+                if (Math.abs(u) > 0.1 && Math.abs(v) > 0.1) {
+                    const dashLine1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    dashLine1.setAttribute('x1', centerX + uScaled);
+                    dashLine1.setAttribute('y1', centerY);
+                    dashLine1.setAttribute('x2', centerX + uScaled);
+                    dashLine1.setAttribute('y2', centerY + vScaled);
+                    dashLine1.setAttribute('stroke', '#95a5a6');
+                    dashLine1.setAttribute('stroke-width', '1');
+                    dashLine1.setAttribute('stroke-dasharray', '5,5');
+                    svg.appendChild(dashLine1);
+
+                    const dashLine2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    dashLine2.setAttribute('x1', centerX);
+                    dashLine2.setAttribute('y1', centerY + vScaled);
+                    dashLine2.setAttribute('x2', centerX + uScaled);
+                    dashLine2.setAttribute('y2', centerY + vScaled);
+                    dashLine2.setAttribute('stroke', '#95a5a6');
+                    dashLine2.setAttribute('stroke-width', '1');
+                    dashLine2.setAttribute('stroke-dasharray', '5,5');
+                    svg.appendChild(dashLine2);
+                }
+            }
+
+            // Now draw all labels ABOVE the vectors (added last = on top) - DARKER colors
+            
+            // u-component label - positioned beyond the arrow tip
+            if (Math.abs(u) > 0.1) {
+                const uText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                const arrowTipX = centerX + uScaled;
+                const uLabelX = u > 0 ? arrowTipX + 15 : arrowTipX - 15; // Beyond tip
+                const uLabelY = centerY - 5;
+                uText.setAttribute('x', uLabelX);
+                uText.setAttribute('y', uLabelY);
+                uText.setAttribute('fill', '#2980b9'); // Dark blue for label
+                uText.setAttribute('font-size', '12');
+                uText.setAttribute('font-weight', 'bold');
+                uText.setAttribute('text-anchor', u > 0 ? 'start' : 'end');
+                uText.textContent = `u = ${u.toFixed(1)}`;
+                svg.appendChild(uText);
+            }
+
+            // v-component label - positioned beyond the arrow tip
+            if (Math.abs(v) > 0.1) {
+                const vText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                const arrowTipY = centerY + vScaled;
+                const vLabelX = centerX + 8;
+                const vLabelY = v > 0 ? arrowTipY - 8 : arrowTipY + 18; // v+ oben, v- unten
+                vText.setAttribute('x', vLabelX);
+                vText.setAttribute('y', vLabelY);
+                vText.setAttribute('fill', '#1e8449'); // Dark green for label
+                vText.setAttribute('font-size', '12');
+                vText.setAttribute('font-weight', 'bold');
+                vText.textContent = `v = ${v.toFixed(1)}`;
+                svg.appendChild(vText);
+            }
+
+            // Resultant vector label - positioned beyond the arrow tip
+            if (speed > 0.1) {
+                const resultText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                const arrowTipX = centerX + uScaled;
+                const arrowTipY = centerY + vScaled;
+                // Calculate offset direction from center to tip
+                const offsetX = uScaled > 0 ? 15 : -15;
+                const offsetY = vScaled > 0 ? 15 : -15;
+                const resultLabelX = arrowTipX + offsetX;
+                const resultLabelY = arrowTipY + offsetY;
+                resultText.setAttribute('x', resultLabelX);
+                resultText.setAttribute('y', resultLabelY);
+                resultText.setAttribute('fill', '#c0392b'); // Dark red for label
+                resultText.setAttribute('font-size', '12');
+                resultText.setAttribute('font-weight', 'bold');
+                resultText.textContent = `|V| = ${speed.toFixed(1)}`;
+                svg.appendChild(resultText);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('inputMode').addEventListener('change', function() {
+            const mode = this.value;
+            if (mode === 'direction') {
+                document.getElementById('directionInputs').style.display = 'block';
+                document.getElementById('componentInputs').style.display = 'none';
+            } else {
+                document.getElementById('directionInputs').style.display = 'none';
+                document.getElementById('componentInputs').style.display = 'block';
+            }
+            updateVisualization();
+        });
+
+        // Add event listeners to all input fields
+        ['windDirection', 'windSpeed', 'uComponent', 'vComponent'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateVisualization);
+        });
+
+        // Initialize
+        updateVisualization();
+    </script>
+</body>
+</html>
