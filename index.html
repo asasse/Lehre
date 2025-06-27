@@ -48,6 +48,12 @@
             padding: 30px;
         }
         
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
         .visualization-panel {
             background: #f8f9fa;
             border-radius: 10px;
@@ -87,6 +93,23 @@
             border-color: #667eea;
         }
         
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .slider {
+            flex: 1;
+        }
+        
+        .slider-value {
+            min-width: 60px;
+            text-align: right;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
         .results {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -121,6 +144,8 @@
             border: 2px solid #ddd;
             border-radius: 10px;
             background: white;
+            width: 100%;
+            height: 400px;
         }
         
         .formula-box {
@@ -143,6 +168,38 @@
             border-radius: 4px;
             margin: 5px 0;
         }
+        
+        .scale-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #856404;
+        }
+        
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .preset-button {
+            padding: 10px;
+            border: 2px solid #667eea;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .preset-button:hover {
+            background: #667eea;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -150,12 +207,15 @@
         <div class="header">
             <h1>Windkomponenten Visualisierung</h1>
             <p>Berechnung und Darstellung von u- und v-Komponenten des Windes</p>
+            <p style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">
+                <strong>Übung: Analyse räumlicher und zeitlicher Daten</strong> | SoSe 2025
+            </p>
         </div>
         
         <div class="content">
             <div class="visualization-panel">
                 <h3>Vektor-Darstellung</h3>
-                <svg id="windVector" width="100%" height="400" viewBox="0 0 400 400">
+                <svg id="windVector" viewBox="-30 -30 460 460">
                     <defs>
                         <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
                             <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f0f0f0" stroke-width="1"/>
@@ -172,23 +232,20 @@
                                 refX="9" refY="3.5" orient="auto" fill="#7dcea0">
                             <polygon points="0 0, 10 3.5, 0 7" />
                         </marker>
-                        <filter id="drop-shadow">
-                            <feDropShadow dx="2" dy="2" stdDeviation="2" flood-opacity="0.1"/>
-                        </filter>
                     </defs>
                     
                     <!-- Background -->
-                    <rect width="400" height="400" fill="url(#grid)"/>
+                    <rect x="0" y="0" width="400" height="400" fill="url(#grid)"/>
                     
                     <!-- Coordinate system -->
                     <line x1="200" y1="0" x2="200" y2="400" stroke="#bdc3c7" stroke-width="2"/>
                     <line x1="0" y1="200" x2="400" y2="200" stroke="#bdc3c7" stroke-width="2"/>
                     
-                    <!-- Axis labels -->
-                    <text x="380" y="195" fill="#2c3e50" font-size="14" font-weight="bold">+u (Ost)</text>
-                    <text x="10" y="195" fill="#2c3e50" font-size="14" font-weight="bold">-u (West)</text>
-                    <text x="205" y="15" fill="#2c3e50" font-size="14" font-weight="bold">+v (Nord)</text>
-                    <text x="205" y="395" fill="#2c3e50" font-size="14" font-weight="bold">-v (Süd)</text>
+                    <!-- Axis labels - moved outside plotting area -->
+                    <text x="410" y="205" fill="#2c3e50" font-size="14" font-weight="bold">+u (Ost)</text>
+                    <text x="-10" y="205" fill="#2c3e50" font-size="14" font-weight="bold" text-anchor="end">-u (West)</text>
+                    <text x="200" y="-15" fill="#2c3e50" font-size="14" font-weight="bold" text-anchor="middle">+v (Nord)</text>
+                    <text x="200" y="425" fill="#2c3e50" font-size="14" font-weight="bold" text-anchor="middle">-v (Süd)</text>
                     
                     <!-- Wind vectors will be drawn here -->
                     <g id="vectors"></g>
@@ -241,25 +298,38 @@
                 <div id="directionInputs">
                     <div class="control-group">
                         <label for="windDirection">Windrichtung (°):</label>
-                        <input type="number" id="windDirection" value="225" min="0" max="360" step="1">
+                        <div class="slider-container">
+                            <input type="range" id="windDirectionSlider" class="slider" value="225" min="0" max="360" step="1">
+                            <input type="number" id="windDirection" value="225" min="0" max="360" step="1" style="width: 80px;">
+                        </div>
                     </div>
                     
                     <div class="control-group">
                         <label for="windSpeed">Windgeschwindigkeit (m/s):</label>
-                        <input type="number" id="windSpeed" value="15" min="0" max="50" step="0.1">
+                        <div class="slider-container">
+                            <input type="range" id="windSpeedSlider" class="slider" value="15" min="0" max="50" step="0.1">
+                            <input type="number" id="windSpeed" value="15" min="0" max="50" step="0.1" style="width: 80px;">
+                        </div>
                     </div>
                 </div>
                 
                 <div id="componentInputs" style="display: none;">
                     <div class="control-group">
                         <label for="uComponent">u-Komponente (m/s):</label>
-                        <input type="number" id="uComponent" value="10.6" step="0.1">
+                        <input type="number" id="uComponent" value="10.6" min="-50" max="50" step="0.1">
                     </div>
                     
                     <div class="control-group">
                         <label for="vComponent">v-Komponente (m/s):</label>
-                        <input type="number" id="vComponent" value="10.6" step="0.1">
+                        <input type="number" id="vComponent" value="10.6" min="-50" max="50" step="0.1">
                     </div>
+                </div>
+                
+                <div class="preset-buttons">
+                    <button class="preset-button" onclick="setPreset(0, 10)">Nordwind 10 m/s</button>
+                    <button class="preset-button" onclick="setPreset(90, 15)">Ostwind 15 m/s</button>
+                    <button class="preset-button" onclick="setPreset(180, 20)">Südwind 20 m/s</button>
+                    <button class="preset-button" onclick="setPreset(270, 25)">Westwind 25 m/s</button>
                 </div>
                 
                 <div class="results">
@@ -290,6 +360,8 @@
     </div>
 
     <script>
+        let currentScale = 8; // pixels per m/s
+
         function calculateWindComponents(direction, speed) {
             const radians = direction * Math.PI / 180;
             const u = -speed * Math.sin(radians);
@@ -333,6 +405,45 @@
             return "Unbekannt";
         }
 
+        function calculateOptimalScale(u, v, speed) {
+            // Calculate the maximum value to display
+            const maxValue = Math.max(Math.abs(u), Math.abs(v), speed);
+            
+            // Available space is 180 pixels from center to edge (with 20px margin)
+            const availableSpace = 180;
+            
+            // Calculate scale to fit the largest vector
+            let scale = availableSpace / maxValue;
+            
+            // Round to nice values for better readability
+            if (scale > 20) scale = 20;
+            else if (scale > 10) scale = Math.floor(scale / 5) * 5;
+            else if (scale > 5) scale = Math.floor(scale);
+            else if (scale > 1) scale = Math.floor(scale * 2) / 2;
+            else scale = Math.floor(scale * 10) / 10;
+            
+            // Ensure minimum scale
+            if (scale < 0.5) scale = 0.5;
+            
+            return scale;
+        }
+
+        function updateScaleMarkers(scale) {
+            // Scale markers removed as requested
+        }
+
+        function validateComponentInput(inputId) {
+            const input = document.getElementById(inputId);
+            let value = parseFloat(input.value);
+            
+            // Prüfe ob der Wert außerhalb des erlaubten Bereichs liegt
+            if (value > 50) {
+                input.value = 50;
+            } else if (value < -50) {
+                input.value = -50;
+            }
+        }
+
         function updateVisualization() {
             const mode = document.getElementById('inputMode').value;
             let u, v, speed, direction;
@@ -344,6 +455,10 @@
                 u = components.u;
                 v = components.v;
             } else {
+                // Validiere die Komponenten-Eingaben
+                validateComponentInput('uComponent');
+                validateComponentInput('vComponent');
+                
                 u = parseFloat(document.getElementById('uComponent').value);
                 v = parseFloat(document.getElementById('vComponent').value);
                 const wind = calculateWindDirection(u, v);
@@ -358,6 +473,12 @@
             document.getElementById('resultDirection').textContent = direction.toFixed(1) + '°';
             document.getElementById('resultType').textContent = getWindType(direction);
 
+            // Calculate optimal scale
+            currentScale = calculateOptimalScale(u, v, speed);
+            
+            // Update scale markers
+            updateScaleMarkers(currentScale);
+
             // Update SVG
             drawWindVectors(u, v, speed);
         }
@@ -368,46 +489,46 @@
 
             const centerX = 200;
             const centerY = 200;
-            const scale = 8; // pixels per m/s
+            const scale = currentScale;
 
             // Scale vectors for display
             const uScaled = u * scale;
             const vScaled = -v * scale; // Negative because SVG y-axis is flipped
 
-            // Draw u-component (horizontal) - LIGHTER arrow
+            // Draw u-component (horizontal)
             if (Math.abs(u) > 0.1) {
                 const uLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 uLine.setAttribute('x1', centerX);
                 uLine.setAttribute('y1', centerY);
                 uLine.setAttribute('x2', centerX + uScaled);
                 uLine.setAttribute('y2', centerY);
-                uLine.setAttribute('stroke', '#85c1e9'); // Light blue for arrow
+                uLine.setAttribute('stroke', '#85c1e9');
                 uLine.setAttribute('stroke-width', '3');
                 uLine.setAttribute('marker-end', 'url(#arrowhead-blue)');
                 svg.appendChild(uLine);
             }
 
-            // Draw v-component (vertical) - LIGHTER arrow
+            // Draw v-component (vertical)
             if (Math.abs(v) > 0.1) {
                 const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 vLine.setAttribute('x1', centerX);
                 vLine.setAttribute('y1', centerY);
                 vLine.setAttribute('x2', centerX);
                 vLine.setAttribute('y2', centerY + vScaled);
-                vLine.setAttribute('stroke', '#7dcea0'); // Light green for arrow
+                vLine.setAttribute('stroke', '#7dcea0');
                 vLine.setAttribute('stroke-width', '3');
                 vLine.setAttribute('marker-end', 'url(#arrowhead-green)');
                 svg.appendChild(vLine);
             }
 
-            // Draw resultant vector - LIGHTER arrow
+            // Draw resultant vector
             if (speed > 0.1) {
                 const resultLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 resultLine.setAttribute('x1', centerX);
                 resultLine.setAttribute('y1', centerY);
                 resultLine.setAttribute('x2', centerX + uScaled);
                 resultLine.setAttribute('y2', centerY + vScaled);
-                resultLine.setAttribute('stroke', '#f1948a'); // Light red for arrow
+                resultLine.setAttribute('stroke', '#f1948a');
                 resultLine.setAttribute('stroke-width', '4');
                 resultLine.setAttribute('marker-end', 'url(#arrowhead)');
                 svg.appendChild(resultLine);
@@ -436,17 +557,17 @@
                 }
             }
 
-            // Now draw all labels ABOVE the vectors (added last = on top) - DARKER colors
+            // Now draw all labels ABOVE the vectors (added last = on top) - Original positioning
             
             // u-component label - positioned beyond the arrow tip
             if (Math.abs(u) > 0.1) {
                 const uText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                 const arrowTipX = centerX + uScaled;
-                const uLabelX = u > 0 ? arrowTipX + 15 : arrowTipX - 15; // Beyond tip
+                const uLabelX = u > 0 ? arrowTipX + 15 : arrowTipX - 15;
                 const uLabelY = centerY - 5;
                 uText.setAttribute('x', uLabelX);
                 uText.setAttribute('y', uLabelY);
-                uText.setAttribute('fill', '#2980b9'); // Dark blue for label
+                uText.setAttribute('fill', '#2980b9');
                 uText.setAttribute('font-size', '12');
                 uText.setAttribute('font-weight', 'bold');
                 uText.setAttribute('text-anchor', u > 0 ? 'start' : 'end');
@@ -459,10 +580,10 @@
                 const vText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                 const arrowTipY = centerY + vScaled;
                 const vLabelX = centerX + 8;
-                const vLabelY = v > 0 ? arrowTipY - 8 : arrowTipY + 18; // v+ oben, v- unten
+                const vLabelY = v > 0 ? arrowTipY - 8 : arrowTipY + 18;
                 vText.setAttribute('x', vLabelX);
                 vText.setAttribute('y', vLabelY);
-                vText.setAttribute('fill', '#1e8449'); // Dark green for label
+                vText.setAttribute('fill', '#1e8449');
                 vText.setAttribute('font-size', '12');
                 vText.setAttribute('font-weight', 'bold');
                 vText.textContent = `v = ${v.toFixed(1)}`;
@@ -474,20 +595,38 @@
                 const resultText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                 const arrowTipX = centerX + uScaled;
                 const arrowTipY = centerY + vScaled;
-                // Calculate offset direction from center to tip
                 const offsetX = uScaled > 0 ? 15 : -15;
                 const offsetY = vScaled > 0 ? 15 : -15;
                 const resultLabelX = arrowTipX + offsetX;
                 const resultLabelY = arrowTipY + offsetY;
                 resultText.setAttribute('x', resultLabelX);
                 resultText.setAttribute('y', resultLabelY);
-                resultText.setAttribute('fill', '#c0392b'); // Dark red for label
+                resultText.setAttribute('fill', '#c0392b');
                 resultText.setAttribute('font-size', '12');
                 resultText.setAttribute('font-weight', 'bold');
                 resultText.textContent = `|V| = ${speed.toFixed(1)}`;
                 svg.appendChild(resultText);
             }
         }
+
+        function setPreset(direction, speed) {
+            document.getElementById('windDirection').value = direction;
+            document.getElementById('windDirectionSlider').value = direction;
+            document.getElementById('windSpeed').value = speed;
+            document.getElementById('windSpeedSlider').value = speed;
+            updateVisualization();
+        }
+
+        // Sync sliders with number inputs
+        document.getElementById('windDirectionSlider').addEventListener('input', function() {
+            document.getElementById('windDirection').value = this.value;
+            updateVisualization();
+        });
+
+        document.getElementById('windSpeedSlider').addEventListener('input', function() {
+            document.getElementById('windSpeed').value = this.value;
+            updateVisualization();
+        });
 
         // Event listeners
         document.getElementById('inputMode').addEventListener('change', function() {
@@ -507,8 +646,6 @@
             document.getElementById(id).addEventListener('input', updateVisualization);
         });
 
-        // Initialize
-        updateVisualization();
     </script>
 </body>
 </html>
